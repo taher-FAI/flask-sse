@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+</body>
+
+<script>
+    var source = new EventSource("/stream?channel=cust-1");
+    source.addEventListener('publish', function (event) {
+        var data = JSON.parse(event.data);
+        console.log("The server says " + data.message);
+    }, false);
+    source.addEventListener('error', function (event) {
+        console.log("Error" + event)
+    }, false);
+    source.addEventListener('open', function (event) {
+        console.log("Connection opened" + event)
+    }, false);
+</script>
+
+</html>

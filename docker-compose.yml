@@ -1,0 +1,9 @@
+version: '3'
+services:
+  sse-server:
+    build: .
+    ports:
+      - 5001:5000
+    environment:
+      - REDIS_HOST=localhost
+    network_mode: host
