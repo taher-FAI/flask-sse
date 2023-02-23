@@ -2,8 +2,19 @@ version: '3'
 services:
   sse-server:
     build: .
+    command: python -u sse.py
     ports:
       - 5001:5000
     environment:
       - REDIS_HOST=localhost
     network_mode: host
+  rabbitmq:
+    image: rabbitmq:3-management
+    network_mode: host
+    ports:
+      - 15672:15672
+      - 5672:5672
+    environment:
+      - RABBITMQ_DEFAULT_PASS=admin
+      - RABBITMQ_DEFAULT_USER=admin
+    

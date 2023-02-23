@@ -85,7 +85,7 @@ class StandaloneApplication(Application):
 
 if __name__ == '__main__':
     options = {
-        'bind': '127.0.0.1:5000',
+        'bind': '0.0.0.0:5000',
         'worker_class': 'gevent'
     }
 

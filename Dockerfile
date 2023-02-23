@@ -12,6 +12,6 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["python", "sse.py"]
+CMD ["python", "-u", "sse.py"]
 
 # celery -A celery_tasks flower
