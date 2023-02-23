@@ -1,11 +1,12 @@
+import json
 import os
 import threading
 import time
 
-import redis
 from flask import Flask, render_template, request, current_app, stream_with_context
 from flask_sse import ServerSentEventsBlueprint
 from gunicorn.app.base import Application, BaseApplication
+import pika
 
 app = Flask(__name__)
 
@@ -37,27 +38,42 @@ sse.add_url_rule(rule="", endpoint="stream", view_func=sse.stream)
 app.register_blueprint(sse, url_prefix='/stream')
 
 
+def new_message(ch, method, properties, body):
+    print(" [x] Received %r" % body)
+
+    message = json.loads(body)
+    cust_id = message.get('cust_id')
+    channel_id = f'cust-{cust_id}'
+    send_message(message, channel=channel_id)
+    ch.basic_ack(delivery_tag=method.delivery_tag)
+
+
 def start_listening():
     try:
-        print('Start listening')
-        rd = redis.StrictRedis(redis_host, redis_port,
-                               charset="utf-8", decode_responses=True)
-        sub = rd.pubsub()
-        sub.subscribe('mq1')
-        for message in sub.listen():
-            print(message)
-            if message.get('type') == 'message':
-                send_message(message.get('data'))
+        print('Start listening to rabbitmq')
+        channel = get_rabbit_connection()
+        channel.queue_declare(queue=os.getenv('SSE_QUEUE'), durable=True)
+        channel.basic_consume(queue=os.getenv('SSE_QUEUE'),
+                              on_message_callback=new_message)
+        channel.start_consuming()
     except Exception as e:
         print(e)
         time.sleep(1)
         start_listening()
 
 
-def send_message(message):
+def get_rabbit_connection():
+    creds = pika.credentials.PlainCredentials(
+        os.getenv('RABBIT_USER'), os.getenv('RABBIT_PASSWORD'))
+    connection = pika.BlockingConnection(pika.ConnectionParameters(
+        os.getenv('RABBIT_HOST'), port=os.getenv('RABBIT_PORT'), credentials=creds))
+    return connection.channel()
+
+
+def send_message(message, channel):
     with app.app_context():
-        print('sending message', message)
-        sse.publish({"message": message}, type='publish', channel='cust-1')
+        print(f'Sending message to client {channel}', message,)
+        sse.publish({"message": message}, type='publish', channel=channel)
         print('Sent')
 
 

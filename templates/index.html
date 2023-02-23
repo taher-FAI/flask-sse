@@ -13,10 +13,10 @@
 </body>
 
 <script>
-    var source = new EventSource("http://localhost:5000/stream?channel=cust-1");
+    var source = new EventSource("http://localhost:5000/stream?channel=cust-101");
     source.addEventListener('publish', function (event) {
         var data = JSON.parse(event.data);
-        console.log("The server says " + data.message);
+        console.log("The server says " + JSON.stringify(data.message));
     }, false);
     source.addEventListener('error', function (event) {
         console.log("Error" + event)

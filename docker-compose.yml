@@ -3,10 +3,12 @@ services:
   sse-server:
     build: .
     command: python -u sse.py
+    # volumes:
+    #   - ./:/python-docker
     ports:
       - 5001:5000
-    environment:
-      - REDIS_HOST=localhost
+    env_file:
+      - .env
     network_mode: host
   rabbitmq:
     image: rabbitmq:3-management
