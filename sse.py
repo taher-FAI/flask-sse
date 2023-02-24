@@ -39,27 +39,26 @@ app.register_blueprint(sse, url_prefix='/stream')
 
 
 def new_message(ch, method, properties, body):
-    print(" [x] Received %r" % body)
-
-    message = json.loads(body)
-    cust_id = message.get('cust_id')
-    channel_id = f'cust-{cust_id}'
-    send_message(message, channel=channel_id)
-    ch.basic_ack(delivery_tag=method.delivery_tag)
+    try:
+        print(" ---------[x]--------- Received %r" % body)
+        message = json.loads(body)
+        cust_id = message.get('cust_id')
+        channel_id = f'cust-{cust_id}'
+        send_message(message, channel=channel_id)
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+    except Exception as e:
+        # TODO Deal with currupted messages
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+        print(e)
 
 
 def start_listening():
-    try:
-        print('Start listening to rabbitmq')
-        channel = get_rabbit_connection()
-        channel.queue_declare(queue=os.getenv('SSE_QUEUE'), durable=True)
-        channel.basic_consume(queue=os.getenv('SSE_QUEUE'),
-                              on_message_callback=new_message)
-        channel.start_consuming()
-    except Exception as e:
-        print(e)
-        time.sleep(1)
-        start_listening()
+    print('Start listening to rabbitmq')
+    channel = get_rabbit_connection()
+    channel.queue_declare(queue=os.getenv('SSE_QUEUE'), durable=True)
+    channel.basic_consume(queue=os.getenv('SSE_QUEUE'),
+                          on_message_callback=new_message)
+    channel.start_consuming()
 
 
 def get_rabbit_connection():
